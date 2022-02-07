@@ -13,8 +13,6 @@ from sklearn.model_selection import KFold
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
-op = ['+', '-', '/', '*']
-feature_candidates = ['f_221', 'f_231', 'f_165', 'f_251', 'f_118']
 
 deleted_features = ['f_22', 'f_78', 'f_25', 'f_174', 'f_258']
 
@@ -34,13 +32,14 @@ if __name__ == '__main__':
     #imp_features = list(zip(model.model.feature_importances_, X.columns))
     #imp_features.sort(reverse=True)
     #print(imp_features[:10])
+    op_list = ['+', '-', '/', '*']
+    feature_list = X.columns.tolist() + ['zero']
 
-    fb = FeatureBuilder(feature_candidates, op)
-    fb.Create()
     db = DatasetBuilder()
-    pm = PolicyModel(num_layer=10, num_ops=len(fb.feature_list), lstm_size=128, lstm_num_layers=1, tanh_constant=2.5, temperature=5)
+    pm = PolicyModel(num_layer=10, num_ops=len(op_list), num_features=len(feature_list), lstm_size=128, 
+                    lstm_num_layers=2, tanh_constant=2.5, temperature=5)
 
     optimizer = torch.optim.Adam(pm.parameters(), lr=0.001)
-    PT = PolicyTrainer(optimizer, pm, model, X, y, db, fb.feature_list, 0.00001)
+    PT = PolicyTrainer(optimizer, pm, model, X, y, db, feature_list, op_list, 0.00001)
     PT.Train(20000)
 

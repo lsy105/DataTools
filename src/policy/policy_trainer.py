@@ -8,7 +8,7 @@ from lightgbm import *
 
 
 class PolicyTrainer(object):
-    def __init__(self, optimizer, policy_model, model, X, y, dataset_builder, feature_list, entropy_parameter):
+    def __init__(self, optimizer, policy_model, model, X, y, dataset_builder, feature_list, op_list, entropy_parameter):
         self.optimizer = optimizer
         self.policy_model = policy_model
         self.model = model
@@ -16,13 +16,14 @@ class PolicyTrainer(object):
         self.X = X
         self.y = y
         self.feature_list = feature_list
+        self.op_list = op_list
         self.dataset_builder = dataset_builder
         self.baseline = None
 
     def GetLoss(self):
         log_prob, entropy, feature_idxes = self.policy_model()
 
-        X_new = self.dataset_builder.Build(self.X, self.feature_list, feature_idxes)
+        X_new = self.dataset_builder.Build(self.X, self.feature_list, self.op_list, feature_idxes)
         import re
         X_new = X_new.rename(columns = lambda x:re.sub('[^A-Za-z0-9_]+', '', x))
         print(feature_idxes)
@@ -40,7 +41,7 @@ class PolicyTrainer(object):
         #self.baseline = self.baseline.detach()
 
         print(log_prob, reward, self.baseline)
-        loss = 100.0 * log_prob * (reward - self.baseline)
+        loss = -1.0 * log_prob * (reward - self.baseline)
         return loss
 
     def Train(self, num_epochs):
