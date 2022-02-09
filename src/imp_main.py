@@ -16,11 +16,12 @@ if __name__ == '__main__':
                objective="regression",
                metric="rmse",
                boosting_type="gbdt",
-               n_estimators=200,
-               num_leaves=100,
-               max_depth=10,
+               n_estimators=30,
+               num_leaves=30,
+               max_depth=5,
                learning_rate=0.05,
                subsample=0.8,
+               verbose=-1,
             ) 
     
     X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.1, random_state=42, shuffle=True)

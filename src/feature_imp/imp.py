@@ -1,10 +1,12 @@
 import numpy as np
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import *
+from lightgbm import log_evaluation
 
 
 class RemoveBadFeature(object):
-    def __init__(self, model, X_train, y_train, X_valid, y_valid, deleted_features=[], top_n=10, n_repeats=5):
+    def __init__(self, model, X_train, y_train, X_valid, y_valid, 
+                 deleted_features=[], top_n=10, verbose_period=500, n_repeats=5):
         self.X_train = X_train
         self.y_train = y_train
         self.X_valid = X_valid
@@ -14,6 +16,7 @@ class RemoveBadFeature(object):
         self.deleted_features = deleted_features
         self.top_n = top_n
         self.n_repeats = n_repeats
+        self.verbose_period = verbose_period
 
     def TrainModel(self, permutation=False):
         X_train_new = self.X_train.drop(self.deleted_features, axis=1)
@@ -21,7 +24,7 @@ class RemoveBadFeature(object):
         self.model.fit(X_train_new, self.y_train,
               eval_set=[(X_valid_new, self.y_valid)],
               eval_metric='rmse',
-              #callbacks=[early_stopping(10, verbose=False), log_evaluation(10)]
+              callbacks=[log_evaluation(self.verbose_period)]
              )
 
         top_deleted = []
@@ -42,24 +45,26 @@ class RemoveBadFeature(object):
     def RemoveOneFeature(self):
         base_res, top_deleted = self.TrainModel(True)
 
-        #find the worst feature
-        worst_feature = []
+        #find bad features
+        bad_feature_cnt = 0
         print(top_deleted)
         for name, mean in top_deleted:
             self.deleted_features.append(name)
             res, _ = self.TrainModel()
             self.deleted_features.pop()
 
+            print('result: ', res, base_res)
             if res < base_res:
-                if len(worst_feature) == 0 or res < worst_feature[0][1]:
-                    worst_feature = [(name, res)]
-        return worst_feature 
+                self.deleted_features.append(name)
+                base_res = res
+                bad_feature_cnt += 1
+
+        return bad_feature_cnt
 
     def Run(self):
         while True:
-            worst_feature = self.RemoveOneFeature()
-            if len(worst_feature) == 0:
+            bad_feature_cnt = self.RemoveOneFeature()
+            if bad_feature_cnt == 0:
                 break
-            self.deleted_features.append(worst_feature[0][0])
         return
 
