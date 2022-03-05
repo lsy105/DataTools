@@ -41,7 +41,7 @@ class PolicyTrainer(object):
         #self.baseline = self.baseline.detach()
 
         print(log_prob, reward, self.baseline)
-        loss = -1.0 * log_prob * (reward - self.baseline)
+        loss = -100.0 * log_prob * (reward - self.baseline)
         return loss
 
     def Train(self, num_epochs):

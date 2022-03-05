@@ -27,6 +27,9 @@ class DatasetBuilder(object):
         elif O == '*':
             O = 'T'
             X_new[name + O] = X[A] * X[B]
+        elif O == '#':
+            O = 'A'
+            X_new[name + O] = X[A]
         else:
             return
 
